@@ -3,7 +3,7 @@
 import time
 
 import config
-from data.redis import redis
+from data.redisdb import redis
 from util.crypt import AESCrypto
 
 

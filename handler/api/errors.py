@@ -11,3 +11,8 @@ status_23 = dict(status_code=523, reason='Wrong password.')
 status_24 = dict(status_code=524, reason='Upload file failed.')
 status_25 = dict(status_code=404, reason='Post params not found.')
 
+status_26 = dict(status_code=10001, reason='decode json request params failed')
+
+
+# api/video/gallery错误信息
+status_20000 = dict(status_code=20000, reason='invalid video id')

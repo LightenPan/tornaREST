@@ -12,7 +12,7 @@ TornaREST is a simple RESTful Web Service build with **[Tornado](http://www.torn
 - Run `init_db.py` at first time to create nesscery data in mongodb
 - Run `server.py`
 
-### API response format  
+### API response format
 ```
 {
     'code': code,

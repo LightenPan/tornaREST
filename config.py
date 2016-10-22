@@ -11,6 +11,13 @@ DB_NAME = 'test'
 DB_USER = ''
 DB_PWD = ''
 
+# Mysql ConfigMYSQL_HOST = 'localhost'
+MYSQL_HOST = 'localhost'
+MYSQL_PORT = 3306
+MYSQL_NAME = 'mtgpsite'
+MYSQL_USER = 'mtgp'
+MYSQL_PWD = 'mtgp12345'
+
 # Redis Config
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379

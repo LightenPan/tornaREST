@@ -5,7 +5,7 @@ import datetime
 import bson
 from bson.objectid import ObjectId
 from bson import SON
-from bson.py3compat import string_type
+from bson.py3compat import string_types
 
 json_lib = True
 try:
@@ -23,7 +23,7 @@ def _json_convert(obj):
     """
     if hasattr(obj, 'iteritems') or hasattr(obj, 'items'):  # PY3 support
         return SON(((k, _json_convert(v)) for k, v in obj.items()))
-    elif hasattr(obj, '__iter__') and not isinstance(obj, string_type):
+    elif hasattr(obj, '__iter__') and not isinstance(obj, string_types):
         return list((_json_convert(v) for v in obj))
     try:
         return default(obj)
@@ -46,6 +46,16 @@ def default(obj):
     raise TypeError("%r is not JSON serializable" % obj)
 
 
+class CJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+            return obj.strftime('%Y-%m-%d %H:%M:%S')
+        elif isinstance(obj, datetime.date):
+            return obj.strftime('%Y-%m-%d')
+        else:
+            return json.JSONEncoder.default(self, obj)
+
+
 def dumps(obj, *args, **kwargs):
     """Helper function that wraps :class:`json.dumps`.
 
@@ -58,5 +68,13 @@ def dumps(obj, *args, **kwargs):
     """
     if not json_lib:
         raise Exception("No json library available")
-    return json.dumps(_json_convert(obj), *args, **kwargs)
+    # return json.dumps(_json_convert(obj), *args, **kwargs)
+    return json.dumps(obj, cls=CJsonEncoder)
 
+
+def loads(s):
+    """Helper function that wraps :class:`json.loads`.
+    """
+    if not json_lib:
+        raise Exception("No json library available")
+    return json.loads(s)

@@ -1,7 +1,7 @@
 # coding:utf-8
+import uuid
 
 from bson import ObjectId
-from util.json import dumps
 import traceback
 from tornado.web import RequestHandler, HTTPError, os
 import config
@@ -10,12 +10,23 @@ from util.token import token_manager
 from qiniu import Auth, put_data
 from util.crypt import md5_data
 
+from util import jsonhelper
+
+# 初始化日志
+import logging
+import logging.config
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger('main')
+
 
 class BaseHandler(RequestHandler):
     def data_received(self, chunk):
         pass
 
     def __init__(self, application, request, **kwargs):
+        # 赋值流水号，可以用来打印日志
+        self.object_id = uuid.uuid4()
+
         RequestHandler.__init__(self, application, request, **kwargs)
         self.set_header('Content-Type', 'text/json')
 
@@ -61,23 +72,35 @@ class BaseHandler(RequestHandler):
             self.write_json(None, status_code, self._reason)
 
     def write_json(self, data, status_code=200, msg='success.'):
-        self.finish(dumps({
+        self.finish(jsonhelper.dumps({
             'code': status_code,
             'msg': msg,
             'data': data
         }))
 
     def is_logined(self):
+        # 自己的账号登录
         if 'Token' in self.request.headers:
             token = self.request.headers['Token']
             logined, uid = token_manager.validate_token(token)
 
-            if logined:
-                # 已经登陆
-                return uid
+            if not logined:
+                raise HTTPError(**errors.status_2)
 
-        # 尚未登陆
-        raise HTTPError(**errors.status_2)
+            # 已经登陆
+            return uid
+        else:
+            # 调用vask库解用户信息
+            uin = self.get_cookie('pt2gguin', '')
+            skey = self.get_cookie('skey', '')
+            # logined = self.__ptlogin.verify(uin, skey, self.request.headers['REMOTE_ADDR'])
+            logined = True
+
+            if not logined:
+                raise HTTPError(**errors.status_2)
+
+            # 已经登陆
+            return uin
 
     def upload_file_from_request(self, name, key):
         if name in self.request.files:
@@ -101,6 +124,22 @@ class BaseHandler(RequestHandler):
 
         # 找不到上传文件
         raise HTTPError(**errors.status_25)
+
+    def info(self, msg, *args, **kwargs):
+        new_msg = '%s, objectid: %s' % (msg, self.object_id)
+        logger.info(new_msg, *args, **kwargs)
+
+    def debug(self, msg, *args, **kwargs):
+        new_msg = '[%s]%s' % (self.object_id, msg)
+        logger.debug(new_msg, *args, **kwargs)
+
+    def warning(self, msg, *args, **kwargs):
+        new_msg = '[%s]%s' % (self.object_id, msg)
+        logger.warning(new_msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        new_msg = '[%s]%s' % (self.object_id, msg)
+        logger.error(new_msg, *args, **kwargs)
 
     @staticmethod
     def vaildate_id(_id):
@@ -134,3 +173,19 @@ class APINotFoundHandler(BaseHandler):
             self.write("")
 
 
+class DbHandler(BaseHandler):
+    @property
+    def db(self):
+        return self.application.db
+
+    def parse_params(self):
+        # 检查登录态
+        uid = self.is_logined()
+
+        # 解请求包
+        try:
+            query = jsonhelper.loads(self.get_argument('p', ''))
+        except:
+            raise HTTPError(**errors.status_26)
+
+        return uid, query

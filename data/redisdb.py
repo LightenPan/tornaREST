@@ -3,7 +3,7 @@
 import redis
 import config
 
-redis = redis.Redis(
+redisdb = redis.Redis(
     connection_pool=
     redis.ConnectionPool(
         host=config.REDIS_HOST,

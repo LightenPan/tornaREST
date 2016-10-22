@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 # coding:utf-8
-
+from sqlalchemy import create_engine
 from tornado import ioloop
 import tornado.netutil
 import tornado.options
 import tornado.httpserver
 from tornado.options import define, options, parse_command_line
-from motorengine import connect
 
-import config
-
-define("port", group='Webserver', type=int, default=80, help="Run on the given port")
+define("port", group='Webserver', type=int, default=30000, help="Run on the given port")
 define("subpath", group='Webserver', type=str, default="", help="Url subpath (such as /nebula)")
 define('unix_socket', group='Webserver', default=None, help='Path to unix socket to bind')
 
@@ -22,10 +19,7 @@ def main():
     if options.subpath:
         options.subpath = '/' + options.subpath
 
-    # Connect to mongodb
     io_loop = ioloop.IOLoop.instance()
-    connect(config.DB_NAME, host=config.DB_HOST, port=config.DB_PORT, io_loop=io_loop,
-            username=config.DB_USER, password=config.DB_PWD)
 
     # Star application
     from application import app
